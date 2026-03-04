@@ -7,7 +7,7 @@ services:
   Hoogi91\Spreadsheets\:
     resource: '../Classes/*'
 
-  Hoogi91\Spreadsheets\EventListener\DataHandlerEventListener:
+  Hoogi91\Spreadsheets\Hooks\DataHandlerHook:
     public: true
 
   Hoogi91\Spreadsheets\Form\Element\DataInputElement:

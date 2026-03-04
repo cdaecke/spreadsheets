@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hoogi91\Spreadsheets\EventListener;
+namespace Hoogi91\Spreadsheets\Hooks;
 
 use Hoogi91\Spreadsheets\Domain\ValueObject\DsnValueObject;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
@@ -11,7 +11,7 @@ use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Resource\FileReference;
 use TYPO3\CMS\Core\Resource\FileRepository;
 
-class DataHandlerEventListener
+class DataHandlerHook
 {
     /**
      * @var array<int, array<mixed>|null>
