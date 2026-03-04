@@ -29,6 +29,10 @@ defined('TYPO3') or die();
         "@import 'EXT:spreadsheets/Configuration/PageTSconfig/BackendPreview.typoscript'"
     );
 
+    // register DataHandler hook for auto-populating spreadsheet DSN after file upload
+    $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['processDatamapClass'][] =
+        \Hoogi91\Spreadsheets\EventListener\DataHandlerEventListener::class;
+
     // add field type to form engine
     $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1513268927167] = [
         'nodeName' => 'spreadsheetInput',

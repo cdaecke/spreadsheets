@@ -11,7 +11,7 @@ trait DsnProviderTrait
     /**
      * @return array<string, array<string>>
      */
-    public function legacyProvider(): array
+    public static function legacyProvider(): array
     {
         return [
             'unknown file' => ['', InvalidDataSourceNameException::class],
@@ -45,7 +45,7 @@ trait DsnProviderTrait
     /**
      * @return array<string, array<string>>
      */
-    public function dsnProvider(): array
+    public static function dsnProvider(): array
     {
         return [
             'unknown file' => ['', InvalidDataSourceNameException::class],

@@ -92,7 +92,7 @@ class CellDataValueObject implements JsonSerializable
         return $this->calculatedValue;
     }
 
-    public function getFormattedValue(): mixed
+    public function getFormattedValue(): string
     {
         return $this->formattedValue;
     }

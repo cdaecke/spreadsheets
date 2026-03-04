@@ -53,12 +53,10 @@ class StylesheetValueObject implements Stringable
                 if (empty($htmlIdentifier) === false) {
                     $content .= sprintf('#%s ', $htmlIdentifier);
                 }
-                $content .= vsprintf(
+                $content .= sprintf(
                     '%s {%s}' . PHP_EOL,
-                    [
-                        $styleName,
-                        $this->assembleStyles($styleDefinition),
-                    ]
+                    $styleName,
+                    $this->assembleStyles($styleDefinition)
                 );
             }
         }

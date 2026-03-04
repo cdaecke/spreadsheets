@@ -69,7 +69,7 @@ abstract class AbstractProcessor implements DataProcessorInterface
         }
 
         $ignoreStyles = (bool)$cObj->stdWrapValue('ignoreStyles', $processorConfiguration['options.'] ?? []);
-        if ($ignoreStyles !== false) {
+        if ($ignoreStyles) {
             return $processedData;
         }
 

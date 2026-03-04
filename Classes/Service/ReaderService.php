@@ -20,9 +20,9 @@ class ReaderService
     /**
      * @throws Reader\Exception
      */
-    public function getSpreadsheet(FileReference|bool $reference): Spreadsheet
+    public function getSpreadsheet(FileReference $reference): Spreadsheet
     {
-        if (is_bool($reference) || $reference->getOriginalFile()->exists() === false) {
+        if ($reference->getOriginalFile()->exists() === false) {
             throw new Reader\Exception('Reference original file doesn\'t exists!', 1_539_959_214);
         }
 

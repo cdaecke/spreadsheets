@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hoogi91\Spreadsheets\Hooks;
+namespace Hoogi91\Spreadsheets\EventListener;
 
 use Hoogi91\Spreadsheets\Domain\ValueObject\DsnValueObject;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
@@ -11,7 +11,7 @@ use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Resource\FileReference;
 use TYPO3\CMS\Core\Resource\FileRepository;
 
-class DataHandlerHook
+class DataHandlerEventListener
 {
     /**
      * @var array<int, array<mixed>|null>
@@ -38,14 +38,14 @@ class DataHandlerHook
                 }
             }
 
-            foreach ($GLOBALS['TCA'][$table]['types'] ?? [] as $CType => $type) {
-                $CType = (string)$CType;
+            foreach ($GLOBALS['TCA'][$table]['types'] ?? [] as $cType => $type) {
+                $cType = (string)$cType;
                 foreach ($type['columnsOverrides'] ?? [] as $column => $conf) {
                     if (
                         isset($conf['config']['renderType'], $conf['config']['uploadField'])
                         && $conf['config']['renderType'] === 'spreadsheetInput'
                     ) {
-                        $this->activationTypes[$table][$CType][(string)$conf['config']['uploadField']][] = $column;
+                        $this->activationTypes[$table][$cType][(string)$conf['config']['uploadField']][] = $column;
                     }
                 }
             }
@@ -65,13 +65,13 @@ class DataHandlerHook
             return;
         }
 
-        // ignore if handler should not process for table and/or CType
-        $CType = $fieldArray['CType'] ?? $this->getBackendRecordField($uid, $table, 'CType');
-        if (!isset($this->activationTypes[$table]['*']) && !isset($this->activationTypes[$table][$CType])) {
+        // ignore if handler should not process for table and/or cType
+        $cType = $fieldArray['CType'] ?? $this->getBackendRecordField($uid, $table, 'CType');
+        if (!isset($this->activationTypes[$table]['*']) && !isset($this->activationTypes[$table][$cType])) {
             return;
         }
 
-        $activationConfig = $this->activationTypes[$table][$CType] ?? $this->activationTypes[$table]['*'] ?? [];
+        $activationConfig = $this->activationTypes[$table][$cType] ?? $this->activationTypes[$table]['*'] ?? [];
         foreach ($activationConfig as $uploadField => $renderFields) {
             // truncate render fields after update if assets have been removed
             if (($fieldArray[$uploadField] ?? null) === 0) {
@@ -84,7 +84,7 @@ class DataHandlerHook
                 continue;
             }
 
-            // if upload fields was filled we get it's relations and start to update all render fields if required
+            // if upload field was filled we get its relations and start to update all render fields if required
             /** @var array<FileReference> $relations */
             $relations = $this->fileRepository->findByRelation($table, $uploadField, $uid);
             foreach ($renderFields as $renderField) {

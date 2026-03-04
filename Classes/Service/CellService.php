@@ -77,12 +77,10 @@ class CellService
         }
 
         // create span to add font styles and insert textual content inside
-        return vsprintf(
+        return sprintf(
             '<span style="%s">%s</span>',
-            [
-                $this->styleService->getStylesheetForRichTextElement($element)->toInlineCSS(),
-                $textContent,
-            ]
+            $this->styleService->getStylesheetForRichTextElement($element)->toInlineCSS(),
+            $textContent
         );
     }
 

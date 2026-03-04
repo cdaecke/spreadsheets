@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hoogi91\Spreadsheets\Tests\Unit\Hooks;
+namespace Hoogi91\Spreadsheets\Tests\Unit\EventListener;
 
-use Hoogi91\Spreadsheets\Hooks\DataHandlerHook;
+use Hoogi91\Spreadsheets\EventListener\DataHandlerEventListener;
 use Hoogi91\Spreadsheets\Tests\Unit\Fixtures\FakeFileRepository;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionProperty;
@@ -15,7 +15,7 @@ use TYPO3\CMS\Core\Resource\FileReference;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
-class DataHandlerHookTest extends UnitTestCase
+class DataHandlerEventListenerTest extends UnitTestCase
 {
     private const DATA_HANDLER_NEW_IDS = [
         'NEW123456' => 123_456,
@@ -25,7 +25,7 @@ class DataHandlerHookTest extends UnitTestCase
 
     private MockObject&ConnectionPool $connectionPool;
 
-    private DataHandlerHook $testHandlerHook;
+    private DataHandlerEventListener $testEventListener;
 
     public function setUp(): void
     {
@@ -35,7 +35,7 @@ class DataHandlerHookTest extends UnitTestCase
         $this->fakeFileRepository = new FakeFileRepository();
         $this->connectionPool = $this->createMock(ConnectionPool::class);
 
-        // Setup TCA so DataHandlerHook builds activationTypes from columnsOverrides
+        // Setup TCA so DataHandlerEventListener builds activationTypes from columnsOverrides
         $GLOBALS['TCA']['tt_content']['types']['spreadsheets_table'] = [
             'columnsOverrides' => [
                 'bodytext' => [
@@ -47,12 +47,12 @@ class DataHandlerHookTest extends UnitTestCase
             ],
         ];
 
-        $this->testHandlerHook = new DataHandlerHook($this->fakeFileRepository, $this->connectionPool);
+        $this->testEventListener = new DataHandlerEventListener($this->fakeFileRepository, $this->connectionPool);
 
         // default record has no bodytext
-        $property = new ReflectionProperty($this->testHandlerHook, 'records');
+        $property = new ReflectionProperty($this->testEventListener, 'records');
         $property->setAccessible(true);
-        $property->setValue($this->testHandlerHook, [123_456 => ['bodytext' => '']]);
+        $property->setValue($this->testEventListener, [123_456 => ['bodytext' => '']]);
     }
 
     protected function tearDown(): void
@@ -84,7 +84,7 @@ class DataHandlerHookTest extends UnitTestCase
         $dataHandlerMock = $this->createMock(DataHandler::class);
         $dataHandlerMock->substNEWwithIDs = self::DATA_HANDLER_NEW_IDS;
         $hookParams[] = $dataHandlerMock;
-        $this->testHandlerHook->processDatamap_afterDatabaseOperations(...array_values($hookParams));
+        $this->testEventListener->processDatamap_afterDatabaseOperations(...array_values($hookParams));
     }
 
     /**
@@ -99,7 +99,7 @@ class DataHandlerHookTest extends UnitTestCase
         array $references,
         bool $updateTriggered = false,
         array $updateParams = [],
-        callable $closure = null
+        ?callable $closure = null
     ): void {
         // update file repository fake with given reference uid's
         $references = array_map(function ($reference) {
@@ -112,7 +112,7 @@ class DataHandlerHookTest extends UnitTestCase
 
         // update statically saved entries got with backend utility
         if ($closure !== null) {
-            $closure($this->testHandlerHook);
+            $closure($this->testEventListener);
         }
 
         // now start process datamap hook test
@@ -169,10 +169,10 @@ class DataHandlerHookTest extends UnitTestCase
                 'references' => [123],
                 'updateTriggered' => false,
                 'updateParams' => [],
-                'closure' => static function ($handler): void {
-                    $property = new ReflectionProperty($handler, 'records');
+                'closure' => static function ($listener): void {
+                    $property = new ReflectionProperty($listener, 'records');
                     $property->setAccessible(true);
-                    $property->setValue($handler, [
+                    $property->setValue($listener, [
                         123_456 => [
                             'CType' => 'spreadsheets_table',
                             'tx_spreadsheets_assets' => 1,
