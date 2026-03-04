@@ -15,22 +15,22 @@ class SpanService
     /**
      * @var array<string, array<string>>
      */
-    private static array $ignoredColumns = [];
+    private array $ignoredColumns = [];
 
     /**
      * @var array<string, array<int>>
      */
-    private static array $ignoredRows = [];
+    private array $ignoredRows = [];
 
     /**
      * @var array<string, array<string>>
      */
-    private static array $ignoredCells = [];
+    private array $ignoredCells = [];
 
     /**
      * @var array<string, array<int|string, array<string, int|array<int>>>>
      */
-    private static array $mergedCells = [];
+    private array $mergedCells = [];
 
     /**
      * @return array<string>
@@ -39,8 +39,8 @@ class SpanService
     public function getIgnoredColumns(Worksheet $worksheet): array
     {
         $sheetHash = $this->getActiveSheetHashCode($worksheet->getParent(), $worksheet);
-        if (isset(self::$ignoredColumns[$sheetHash])) {
-            return self::$ignoredColumns[$sheetHash];
+        if (isset($this->ignoredColumns[$sheetHash])) {
+            return $this->ignoredColumns[$sheetHash];
         }
 
         // map ignored cells by column
@@ -58,7 +58,7 @@ class SpanService
         );
 
         // only return row numbers of rows to ignore
-        return self::$ignoredColumns[$sheetHash] = array_keys(array_filter($ignoredColumnsByRow));
+        return $this->ignoredColumns[$sheetHash] = array_keys(array_filter($ignoredColumnsByRow));
     }
 
     /**
@@ -68,8 +68,8 @@ class SpanService
     public function getIgnoredRows(Worksheet $worksheet): array
     {
         $sheetHash = $this->getActiveSheetHashCode($worksheet->getParent(), $worksheet);
-        if (isset(self::$ignoredRows[$sheetHash])) {
-            return self::$ignoredRows[$sheetHash];
+        if (isset($this->ignoredRows[$sheetHash])) {
+            return $this->ignoredRows[$sheetHash];
         }
 
         // map ignored cells by row
@@ -87,7 +87,7 @@ class SpanService
         );
 
         // only return row numbers of rows to ignore
-        return self::$ignoredRows[$sheetHash] = array_keys(array_filter($ignoredRowsByColumn));
+        return $this->ignoredRows[$sheetHash] = array_keys(array_filter($ignoredRowsByColumn));
     }
 
     /**
@@ -96,8 +96,8 @@ class SpanService
     public function getIgnoredCells(Worksheet $worksheet): array
     {
         $sheetHash = $this->getActiveSheetHashCode($worksheet->getParent(), $worksheet);
-        if (isset(self::$ignoredCells[$sheetHash])) {
-            return self::$ignoredCells[$sheetHash];
+        if (isset($this->ignoredCells[$sheetHash])) {
+            return $this->ignoredCells[$sheetHash];
         }
 
         $ignoredCells = [];
@@ -112,7 +112,7 @@ class SpanService
             array_push($ignoredCells, ...$cellsByRange);
         }
 
-        return self::$ignoredCells[$sheetHash] = array_unique($ignoredCells);
+        return $this->ignoredCells[$sheetHash] = array_unique($ignoredCells);
     }
 
     /**
@@ -122,8 +122,8 @@ class SpanService
     public function getMergedCells(Worksheet $worksheet): array
     {
         $sheetHash = $this->getActiveSheetHashCode($worksheet->getParent(), $worksheet);
-        if (isset(self::$mergedCells[$sheetHash])) {
-            return self::$mergedCells[$sheetHash];
+        if (isset($this->mergedCells[$sheetHash])) {
+            return $this->mergedCells[$sheetHash];
         }
 
         $rowCount = $worksheet->getHighestRow();
@@ -146,7 +146,7 @@ class SpanService
             ];
         }
 
-        return self::$mergedCells[$sheetHash] = $mergedCells;
+        return $this->mergedCells[$sheetHash] = $mergedCells;
     }
 
     /**
@@ -167,6 +167,7 @@ class SpanService
 
     private function getActiveSheetHashCode(?Spreadsheet $spreadsheet, Worksheet $worksheet): string
     {
-        return md5($spreadsheet?->getID() . $worksheet->getHashCode());
+        $spreadsheetId = $spreadsheet !== null ? $spreadsheet->getID() : 'obj:' . spl_object_id($worksheet);
+        return md5($spreadsheetId . $worksheet->getHashCode());
     }
 }

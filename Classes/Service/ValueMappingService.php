@@ -16,7 +16,11 @@ class ValueMappingService
     public function __construct()
     {
         $configFilePath = ExtUtil::extPath('spreadsheets') . 'Configuration/ValueMappings.php';
-        $this->mappings = include $configFilePath;
+        $mappings = include $configFilePath;
+        if (!is_array($mappings)) {
+            throw new \RuntimeException('ValueMappings configuration did not return an array: ' . $configFilePath);
+        }
+        $this->mappings = $mappings;
     }
 
     public function convertValue(string $map, ?string $value, ?string $default = null): ?string

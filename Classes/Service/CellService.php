@@ -103,26 +103,29 @@ class CellService
         // get cell style to find number format code
         if (is_numeric($value) && $style instanceof Style) {
             // check current locales and set them for converting numeric values
+            $currentLocale = null;
             if (!empty($this->getCurrentLocales())) {
                 $availableLocales = GeneralUtility::trimExplode(',', $this->getCurrentLocales(), true);
                 $currentLocale = setlocale(LC_NUMERIC, '0');
                 setlocale(LC_NUMERIC, ...$availableLocales);
             }
 
-            // remove escaped whitespaces from format code to get correct formatted numbers
-            $formatCode = str_replace('\\ ', ' ', $style->getNumberFormat()->getFormatCode() ?? '');
+            try {
+                // remove escaped whitespaces from format code to get correct formatted numbers
+                $formatCode = str_replace('\\ ', ' ', $style->getNumberFormat()->getFormatCode() ?? '');
 
-            // check for scientific format and do better formatting than NumberFormat class
-            preg_match('/(0+)(\\.?)(0*)E[+-]0/i', $formatCode, $matches);
-            // extract count of decimals and use it as print argument
-            // otherwise do normal format logic with given format code
-            $value = isset($matches[3]) && $matches[3] !== ''
-                ? sprintf('%5.' . strlen($matches[3]) . 'E', $value)
-                : NumberFormat::toFormattedString($value, $formatCode);
-
-            // reset locale to previous state
-            if (isset($currentLocale) && is_string($currentLocale)) {
-                setlocale(LC_NUMERIC, $currentLocale);
+                // check for scientific format and do better formatting than NumberFormat class
+                preg_match('/(0+)(\\.?)(0*)E[+-]0/i', $formatCode, $matches);
+                // extract count of decimals and use it as print argument
+                // otherwise do normal format logic with given format code
+                $value = isset($matches[3]) && $matches[3] !== ''
+                    ? sprintf('%5.' . strlen($matches[3]) . 'E', $value)
+                    : NumberFormat::toFormattedString($value, $formatCode);
+            } finally {
+                // reset locale to previous state
+                if (is_string($currentLocale)) {
+                    setlocale(LC_NUMERIC, $currentLocale);
+                }
             }
 
             return $value;
