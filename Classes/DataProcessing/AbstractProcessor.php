@@ -13,8 +13,7 @@ use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
-use TYPO3\CMS\Core\Resource\FileRepository;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Frontend\ContentObject\DataProcessorInterface;
 
@@ -24,7 +23,7 @@ abstract class AbstractProcessor implements DataProcessorInterface
         private readonly ReaderService $readerService,
         private readonly ExtractorService $extractorService,
         private readonly StyleService $styleService,
-        private readonly FileRepository $fileRepository,
+        private readonly ResourceFactory $resourceFactory,
         private readonly PageRenderer $pageRenderer
     ) {
     }
@@ -59,7 +58,7 @@ abstract class AbstractProcessor implements DataProcessorInterface
             // get spreadsheet DSN value from content object to parse and render
             $dsnValue = DsnValueObject::createFromDSN($value);
             $spreadsheet = $this->readerService->getSpreadsheet(
-                $this->fileRepository->findFileReferenceByUid($dsnValue->getFileReference())
+                $this->resourceFactory->getFileReferenceObject($dsnValue->getFileReference())
             );
 
             $processedData[$targetVariableName] = $this->getTemplateData($dsnValue, $spreadsheet, $processedData);
@@ -84,11 +83,8 @@ abstract class AbstractProcessor implements DataProcessorInterface
             $processorConfiguration['options.'] ?? [],
             'sheet'
         );
-        $this->pageRenderer->addCssFile(
-            GeneralUtility::writeStyleSheetContentToTemporaryFile(
-                $this->styleService->getStylesheet($spreadsheet)->toCSS($htmlIdentifier)
-            )
-        );
+        $cssContent = $this->styleService->getStylesheet($spreadsheet)->toCSS($htmlIdentifier);
+        $this->pageRenderer->addCssInlineBlock('spreadsheets_' . md5($cssContent), $cssContent);
 
         return $processedData;
     }

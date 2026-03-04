@@ -5,26 +5,23 @@ declare(strict_types=1);
 namespace Hoogi91\Spreadsheets\Tests\Unit\Hooks;
 
 use Hoogi91\Spreadsheets\Hooks\DataHandlerHook;
-use Hoogi91\Spreadsheets\Tests\Unit\FileRepositoryMockTrait;
+use Hoogi91\Spreadsheets\Tests\Unit\Fixtures\FakeFileRepository;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionProperty;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Resource\FileReference;
-use TYPO3\CMS\Core\Resource\FileRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class DataHandlerHookTest extends UnitTestCase
 {
-    use FileRepositoryMockTrait;
-
     private const DATA_HANDLER_NEW_IDS = [
         'NEW123456' => 123_456,
     ];
 
-    private MockObject&FileRepository $fileRepositoryMock;
+    private FakeFileRepository $fakeFileRepository;
 
     private MockObject&ConnectionPool $connectionPool;
 
@@ -34,9 +31,23 @@ class DataHandlerHookTest extends UnitTestCase
     {
         parent::setUp();
 
-        $this->fileRepositoryMock = $this->getFileRepositoryMock();
+        FakeFileRepository::reset();
+        $this->fakeFileRepository = new FakeFileRepository();
         $this->connectionPool = $this->createMock(ConnectionPool::class);
-        $this->testHandlerHook = new DataHandlerHook($this->fileRepositoryMock, $this->connectionPool);
+
+        // Setup TCA so DataHandlerHook builds activationTypes from columnsOverrides
+        $GLOBALS['TCA']['tt_content']['types']['spreadsheets_table'] = [
+            'columnsOverrides' => [
+                'bodytext' => [
+                    'config' => [
+                        'renderType' => 'spreadsheetInput',
+                        'uploadField' => 'tx_spreadsheets_assets',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->testHandlerHook = new DataHandlerHook($this->fakeFileRepository, $this->connectionPool);
 
         // default record has no bodytext
         $property = new ReflectionProperty($this->testHandlerHook, 'records');
@@ -90,14 +101,14 @@ class DataHandlerHookTest extends UnitTestCase
         array $updateParams = [],
         callable $closure = null
     ): void {
-        // update file repository mock with given reference uid's
+        // update file repository fake with given reference uid's
         $references = array_map(function ($reference) {
             $mock = $this->getMockBuilder(FileReference::class)->disableOriginalConstructor()->getMock();
             $mock->method('getUid')->willReturn($reference);
 
             return $mock;
         }, $references);
-        $this->fileRepositoryMock->method('findByRelation')->willReturn($references);
+        FakeFileRepository::setFindByRelationResult($references);
 
         // update statically saved entries got with backend utility
         if ($closure !== null) {
@@ -171,7 +182,7 @@ class DataHandlerHookTest extends UnitTestCase
                 },
             ],
             '[NEW] saved and bodytext gets updated' => [
-                // uses file repo mock reference ID
+                // uses file repo fake reference ID
                 'hookParams' => self::hookParams(),
                 'references' => [456],
                 'updateTriggered' => true,

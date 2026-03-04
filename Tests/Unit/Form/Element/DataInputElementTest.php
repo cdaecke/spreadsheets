@@ -7,6 +7,7 @@ namespace Hoogi91\Spreadsheets\Tests\Unit\Form\Element;
 use Hoogi91\Spreadsheets\Form\Element\DataInputElement;
 use Hoogi91\Spreadsheets\Service\ExtractorService;
 use Hoogi91\Spreadsheets\Service\ReaderService;
+use Hoogi91\Spreadsheets\Tests\Unit\Fixtures\FakeResourceFactory;
 use JsonSerializable;
 use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
@@ -15,15 +16,46 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Traversable;
 use TYPO3\CMS\Backend\Form\NodeFactory;
 use TYPO3\CMS\Core\Database\RelationHandler;
-use TYPO3\CMS\Core\Imaging\IconFactory;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Page\JavaScriptModuleInstruction;
 use TYPO3\CMS\Core\Resource\FileReference;
-use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
-use TYPO3\CMS\Fluid\View\StandaloneView;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
+use TYPO3Fluid\Fluid\View\ViewInterface;
+
+/**
+ * Testable subclass of DataInputElement that allows injecting a view mock
+ * without requiring BackendViewFactory (which is final readonly in TYPO3 v13).
+ *
+ * Provides a constructor accepting (NodeFactory, array $data) for test convenience,
+ * since DataInputElement itself no longer has this constructor in TYPO3 v13
+ * (data is injected via setData(), NodeFactory via injectNodeFactory()).
+ */
+class TestableDataInputElement extends DataInputElement
+{
+    private static ViewInterface $testView;
+
+    public function __construct(NodeFactory $nodeFactory, array $data)
+    {
+        // Bypass parent constructor (needs BackendViewFactory, which is final readonly in v13).
+        // DataInputElement is a public shared:false service in production; NodeFactory and data
+        // are set here manually to allow direct instantiation in unit tests.
+        $this->injectNodeFactory($nodeFactory);
+        $this->setData($data);
+    }
+
+    public static function setTestView(ViewInterface $view): void
+    {
+        self::$testView = $view;
+    }
+
+    protected function createView(array $config): ViewInterface
+    {
+        self::$testView->assign('inputSize', (int)($config['size'] ?? 0));
+
+        return self::$testView;
+    }
+}
 
 class DataInputElementTest extends UnitTestCase
 {
@@ -65,11 +97,10 @@ class DataInputElementTest extends UnitTestCase
     ];
 
     private const EMPTY_EXPECTED_RESULT = [
-        'additionalJavaScriptPost' => [],
         'additionalHiddenFields' => [],
         'additionalInlineLanguageLabelFiles' => [],
         'stylesheetFiles' => [],
-        'requireJsModules' => [],
+        'javaScriptModules' => [],
         'inlineData' => [],
     ];
 
@@ -98,13 +129,9 @@ class DataInputElementTest extends UnitTestCase
 
     private ExtractorService&MockObject $extractorService;
 
-    private MockObject&StandaloneView $standaloneView;
-
-    private MockObject&IconFactory $iconFactory;
-
     private MockObject&RelationHandler $relationHandler;
 
-    private MockObject&ResourceFactory $resourceFactory;
+    private FakeResourceFactory $fakeResourceFactory;
 
     /**
      * @var array<mixed>
@@ -121,43 +148,63 @@ class DataInputElementTest extends UnitTestCase
         $spreadsheet = (new Xlsx())->load(dirname(__DIR__, 3) . '/Fixtures/01_fixture.xlsx');
         $this->readerService = $this->createMock(ReaderService::class);
         $this->readerService->method('getSpreadsheet')->willReturn($spreadsheet);
-        $this->standaloneView = $this->createMock(StandaloneView::class);
-        $this->standaloneView->method('assign')->with(
+
+        // Create view mock with full assign/render behavior (AbstractTemplateView has getRenderingContext)
+        $viewMock = $this->getMockBuilder(\TYPO3Fluid\Fluid\View\AbstractTemplateView::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $viewMock->method('assign')->with(
             $trueCallback(static fn ($key) => self::$assignedVariables['_next'] = $key),
             $trueCallback(static function ($value): void {
                 self::$assignedVariables[self::$assignedVariables['_next']] = $value;
                 unset(self::$assignedVariables['_next']);
             })
         )->willReturnSelf();
-        $this->standaloneView->method('assignMultiple')->with($trueCallback(
+        $viewMock->method('assignMultiple')->with($trueCallback(
             static fn ($values) => self::$assignedVariables = array_merge(self::$assignedVariables, $values)
         ))->willReturnSelf();
-        $this->standaloneView->method('render')->willReturnCallback(static fn () => self::$assignedVariables);
+        $viewMock->method('render')->willReturnCallback(static fn () => self::$assignedVariables);
+
+        // Set up rendering context chain for template path configuration
+        $templatePaths = $this->getMockBuilder(\TYPO3Fluid\Fluid\View\TemplatePaths::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $renderingContext = $this->createMock(\TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface::class);
+        $renderingContext->method('getTemplatePaths')->willReturn($templatePaths);
+        $viewMock->method('getRenderingContext')->willReturn($renderingContext);
+
+        // Inject view mock into TestableDataInputElement before construction
+        TestableDataInputElement::setTestView($viewMock);
+
         $this->extractorService = $this->createMock(ExtractorService::class);
         $this->extractorService->method('rangeToCellArray')->willReturn([
             'A1' => file_get_contents(dirname(__DIR__, 3) . '/Fixtures/latin1-content.txt'),
         ]);
-        $this->iconFactory = $this->createMock(IconFactory::class);
 
         GeneralUtility::addInstance(ReaderService::class, $this->readerService);
         GeneralUtility::addInstance(ExtractorService::class, $this->extractorService);
-        GeneralUtility::addInstance(StandaloneView::class, $this->standaloneView);
-        GeneralUtility::addInstance(IconFactory::class, $this->iconFactory);
+
+        // FakeResourceFactory for BackendUtility::resolveFileReferences (uses ResourceFactory singleton)
+        FakeResourceFactory::reset();
+        $this->fakeResourceFactory = new FakeResourceFactory();
+        GeneralUtility::setSingletonInstance(\TYPO3\CMS\Core\Resource\ResourceFactory::class, $this->fakeResourceFactory);
 
         // mock file reference handler to get valid files
         $this->relationHandler = $this->createMock(RelationHandler::class);
-        $this->resourceFactory = $this->createMock(ResourceFactory::class);
-
         GeneralUtility::addInstance(RelationHandler::class, $this->relationHandler);
-        GeneralUtility::setSingletonInstance(ResourceFactory::class, $this->resourceFactory);
 
         // setup extension TCA
         $GLOBALS['TCA']['tt_content']['columns']['CType']['config']['items'] = [];
         include dirname(__DIR__, 4) . '/Configuration/TCA/Overrides/tt_content.php';
+
+        // BackendUtility::resolveFileReferences needs foreign_table in raw TCA config
+        // (TcaPreparation does not run in unit tests)
+        $GLOBALS['TCA']['tt_content']['columns']['tx_spreadsheets_assets']['config']['foreign_table'] = 'sys_file_reference';
     }
 
     protected function tearDown(): void
     {
+        FakeResourceFactory::reset();
         GeneralUtility::purgeInstances();
         parent::tearDown();
         self::$assignedVariables = [];
@@ -185,22 +232,22 @@ class DataInputElementTest extends UnitTestCase
             $this->relationHandler->tableArray = [
                 'sys_file_reference' => [$referenceFieldUid], // mocked file reference uid to spreadsheet file
             ];
-            $this->resourceFactory->method('getFileReferenceObject')->willReturn(
-                $this->createConfiguredMock(
-                    FileReference::class,
-                    [
-                        'getUid' => $referenceFieldUid,
-                        'getExtension' => str_contains($referenceFileExtension, '|exception')
-                            ? strtok($referenceFileExtension, '|')
-                            : $referenceFileExtension,
-                        'toArray' => [
-                            'ext' => str_contains($referenceFileExtension, '|exception')
-                            ? strtok($referenceFileExtension, '|')
-                            : $referenceFileExtension,
-                        ],
-                    ]
-                )
+
+            $fileReferenceMock = $this->createConfiguredMock(
+                FileReference::class,
+                [
+                    'getUid' => $referenceFieldUid,
+                    'getExtension' => str_contains($referenceFileExtension, '|exception')
+                        ? strtok($referenceFileExtension, '|')
+                        : $referenceFileExtension,
+                    'toArray' => [
+                        'ext' => str_contains($referenceFileExtension, '|exception')
+                        ? strtok($referenceFileExtension, '|')
+                        : $referenceFileExtension,
+                    ],
+                ]
             );
+            FakeResourceFactory::addFileReference($referenceFieldUid, $fileReferenceMock);
 
             if (str_contains($referenceFileExtension, '|exceptionRead')) {
                 $this->readerService->method('getSpreadsheet')->willThrowException(new ReaderException());
@@ -217,7 +264,7 @@ class DataInputElementTest extends UnitTestCase
 
         // extend config and create element
         $data['parameterArray']['fieldConf']['config'] = $fieldConfig;
-        $element = new DataInputElement($this->createMock(NodeFactory::class), $data);
+        $element = new TestableDataInputElement($this->createMock(NodeFactory::class), $data);
 
         // extract mocked html variables from rendered data
         $renderedData = $element->render();
@@ -225,15 +272,11 @@ class DataInputElementTest extends UnitTestCase
         unset($renderedData['html']);
 
         $expectedResult = self::EMPTY_EXPECTED_RESULT;
-        if ((new Typo3Version())->getMajorVersion() > 11) {
-            $expectedResult['javaScriptModules'] = [];
-        }
-
         if (isset($expected['valueObject'])) {
             $expectedResult['stylesheetFiles'] = ['EXT:spreadsheets/Resources/Public/Css/SpreadsheetDataInput.css'];
-            $expectedResult['requireJsModules'][] = JavaScriptModuleInstruction::forRequireJS(
-                'TYPO3/CMS/Spreadsheets/SpreadsheetDataInput'
-            )->instance($expected['inputName'] ?? null);
+            $expectedResult['javaScriptModules'][] = JavaScriptModuleInstruction::create(
+                '@hoogi91/spreadsheets/SpreadsheetDataInput.js'
+            );
             self::assertEquals($expectedResult, $renderedData);
         } else {
             // no value object means we should have an empty form element result

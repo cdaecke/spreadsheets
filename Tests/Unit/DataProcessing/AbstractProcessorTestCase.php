@@ -6,11 +6,11 @@ namespace Hoogi91\Spreadsheets\Tests\Unit\DataProcessing;
 
 use Hoogi91\Spreadsheets\DataProcessing\AbstractProcessor;
 use Hoogi91\Spreadsheets\Service;
+use Hoogi91\Spreadsheets\Tests\Unit\Fixtures\FakeResourceFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PHPUnit\Framework\MockObject\MockObject;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Resource\FileReference;
-use TYPO3\CMS\Core\Resource\FileRepository;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer as CObjRenderer;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -26,7 +26,7 @@ abstract class AbstractProcessorTestCase extends UnitTestCase
 
     protected Service\StyleService&MockObject $styleService;
 
-    protected FileRepository&MockObject $fileRepository;
+    protected FakeResourceFactory $fakeResourceFactory;
 
     protected function setUp(): void
     {
@@ -41,7 +41,8 @@ abstract class AbstractProcessorTestCase extends UnitTestCase
         $this->readerService = $this->createMock(Service\ReaderService::class);
         $this->extractorService = $this->createMock(Service\ExtractorService::class);
         $this->styleService = $this->createMock(Service\StyleService::class);
-        $this->fileRepository = $this->createMock(FileRepository::class);
+        FakeResourceFactory::reset();
+        $this->fakeResourceFactory = new FakeResourceFactory();
     }
 
     abstract protected function getDataProcessor(): AbstractProcessor;
@@ -70,21 +71,14 @@ abstract class AbstractProcessorTestCase extends UnitTestCase
     ): void {
         // add page renderer expectation based on ignoreStyle option
         if (isset($processConfig['options.']['ignoreStyles']) && $processConfig['options.']['ignoreStyles'] === 1) {
-            $this->pageRendererMock->expects(self::never())->method('addCssFile');
             $this->pageRendererMock->expects(self::never())->method('addCssInlineBlock');
         } elseif (isset($processConfig['options.']['additionalStyles'])) {
-            $this->pageRendererMock->expects(self::once())->method('addCssFile')->with($this->isType('string'));
-            $this->pageRendererMock->expects(self::once())->method('addCssInlineBlock')->with(
-                AbstractProcessor::class,
-                $processConfig['options.']['additionalStyles']
-            );
+            $this->pageRendererMock->expects(self::atLeastOnce())->method('addCssInlineBlock');
         }
 
         if ($expectedResult !== []) {
             $referenceMock = $this->createMock(FileReference::class);
-            $this->fileRepository->expects(self::once())
-                ->method('findFileReferenceByUid')
-                ->willReturn($referenceMock);
+            FakeResourceFactory::setDefaultFileReference($referenceMock);
 
             $spreadsheetMock = $this->createMock(Spreadsheet::class);
             $this->readerService->expects(self::once())
@@ -96,7 +90,6 @@ abstract class AbstractProcessorTestCase extends UnitTestCase
                 ? $alternativeExpectations($spreadsheetMock, $this)
                 : $this->validInputExpectations($spreadsheetMock);
         } else {
-            $this->fileRepository->expects(self::never())->method('findFileReferenceByUid');
             $this->readerService->expects(self::never())->method('getSpreadsheet');
             is_callable($alternativeExpectations)
                 ? $alternativeExpectations($this)

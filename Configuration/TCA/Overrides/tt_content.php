@@ -7,9 +7,9 @@ defined('TYPO3') or die();
         'tt_content',
         'CType',
         [
-            'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang.xlf:wizards.spreadsheets_table.title',
-            'spreadsheets_table',
-            'mimetypes-open-document-spreadsheet',
+            'label' => 'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang.xlf:wizards.spreadsheets_table.title',
+            'value' => 'spreadsheets_table',
+            'icon' => 'mimetypes-open-document-spreadsheet',
         ],
         'table',
         'after'
@@ -20,9 +20,9 @@ defined('TYPO3') or die();
             'tt_content',
             'CType',
             [
-                'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang.xlf:wizards.spreadsheets_tabs.title',
-                'spreadsheets_tabs',
-                'mimetypes-open-document-database',
+                'label' => 'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang.xlf:wizards.spreadsheets_tabs.title',
+                'value' => 'spreadsheets_tabs',
+                'icon' => 'mimetypes-open-document-database',
             ],
             'spreadsheets_table',
             'after'
@@ -32,31 +32,30 @@ defined('TYPO3') or die();
     // add own assets upload field
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns($table, [
         'tx_spreadsheets_assets' => [
-            'config' => \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::getFileFieldTCAConfig(
-                'tx_spreadsheets_assets',
-                [
-                    'foreign_table' => 'sys_file_reference',
-                    'appearance' => [
-                        'createNewRelationLinkTitle' => 'LLL:EXT:frontend/Resources/Private/Language/Database.xlf:tt_content.asset_references.addFileReference',
-                    ],
-                    'overrideChildTca' => [
-                        'types' => [
-                            '0' => [
-                                'showitem' => '--palette--;;filePalette',
-                            ],
+            'label' => 'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang.xlf:tca.assets',
+            'config' => [
+                'type' => 'file',
+                'allowed' => implode(',', \Hoogi91\Spreadsheets\Service\ReaderService::ALLOWED_EXTENSIONS),
+                'appearance' => [
+                    'createNewRelationLinkTitle' => 'LLL:EXT:frontend/Resources/Private/Language/locallang_ttc.xlf:asset_references.addFileReference',
+                    'showPossibleLocalizationRecords' => true,
+                ],
+                'overrideChildTca' => [
+                    'types' => [
+                        '0' => [
+                            'showitem' => '--palette--;;filePalette',
                         ],
                     ],
                 ],
-                implode(',', \Hoogi91\Spreadsheets\Service\ReaderService::ALLOWED_EXTENSIONS)
-            ),
+            ],
         ],
         'tx_spreadsheets_ignore_styles' => [
             'config' => [
                 'type' => 'check',
                 'items' => [
                     [
-                        'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang.xlf:tca.tx_spreadsheets_ignore_styles.label',
-                        '',
+                        'label' => 'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang.xlf:tca.tx_spreadsheets_ignore_styles.label',
+                        'value' => '',
                     ],
                 ],
                 'default' => 0,

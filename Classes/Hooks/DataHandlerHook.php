@@ -52,23 +52,16 @@ class DataHandlerHook
         }
     }
 
-    /**
-     * @param string|mixed $status Status which should be "new" to activate this hook
-     * @param string|mixed $table Table which should be "tt_content" to activate this hook
-     * @param int|string|mixed $id Temporary ID used to search for real new uid
-     * @param array<mixed> $fieldArray Field array that has been saved to database
-     * @param DataHandler $dataHandler Data handler instance
-     */
-    public function processDatamap_afterDatabaseOperations( // @codingStandardsIgnoreLine
-        $status,
-        $table,
-        $id,
+    public function processDatamap_afterDatabaseOperations(
+        string $status,
+        string $table,
+        int|string $id,
         array $fieldArray,
         DataHandler $dataHandler
     ): void {
         // skip processing for not found uid or irrelevant status
         $uid = $dataHandler->substNEWwithIDs[$id] ?? (is_int($id) ? $id : null);
-        if ($uid === null || !is_string($table) || !in_array($status, ['new', 'update'], true)) {
+        if ($uid === null || !in_array($status, ['new', 'update'], true)) {
             return;
         }
 
@@ -101,12 +94,7 @@ class DataHandlerHook
     }
 
     /**
-     * @param int $uid UID of chart record
-     * @param string $table Table to update
-     * @param string $status Status of current record update
-     * @param string $field Field to update spreadsheet value
-     * @param array<FileReference> $relations File relations found
-     *
+     * @param array<FileReference> $relations
      */
     private function setSpreadsheetValue(
         int $uid,
@@ -139,9 +127,7 @@ class DataHandlerHook
     }
 
     /**
-     * @param DsnValueObject $dsn Original DSN
-     * @param array<FileReference> $references File relations found
-     *
+     * @param array<FileReference> $references
      */
     private function getTranslatedSpreadsheetDsn(DsnValueObject $dsn, array $references): ?string
     {
@@ -158,11 +144,6 @@ class DataHandlerHook
         return null;
     }
 
-    /**
-     * @param int $uid UID of record
-     * @param string $table Table to get record from
-     * @param string $field Field to extract
-     */
     private function getBackendRecordField(int $uid, string $table, string $field): mixed
     {
         if (!isset($this->records[$uid])) {

@@ -5,6 +5,9 @@ import * as url from 'url';
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 export default (env, argv) => ({
+    experiments: {
+        outputModule: true,
+    },
     optimization: {
         minimizer: [
             new TerserPlugin({
@@ -34,11 +37,13 @@ export default (env, argv) => ({
     },
     output: {
         filename: "[name].js",
-        libraryTarget: "amd",
+        library: {
+            type: 'module',
+        },
         path: path.join(__dirname, "/Resources/Public/JavaScript"),
-        publicPath: argv.mode !== "production" ? "/" : "../dist/"
     },
+    externalsType: 'module',
     externals: {
-        "DocumentService": "TYPO3/CMS/Core/DocumentService",
+        '@typo3/core/document-service.js': '@typo3/core/document-service.js',
     }
 });

@@ -7,13 +7,14 @@ services:
   Hoogi91\Spreadsheets\:
     resource: '../Classes/*'
 
+  Hoogi91\Spreadsheets\Form\Element\DataInputElement:
+    public: true
+    shared: false
+
   Hoogi91\Spreadsheets\DataProcessing\SpreadsheetProcessor:
     public: true
 
   Hoogi91\Spreadsheets\DataProcessing\TabsProcessor:
-    public: true
-
-  Hoogi91\Spreadsheets\Hooks\DataHandlerHook:
     public: true
 
   Hoogi91\Spreadsheets\Service\ExtractorService:

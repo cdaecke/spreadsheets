@@ -9,9 +9,10 @@ use Hoogi91\Spreadsheets\Domain\ValueObject\DsnValueObject;
 use Hoogi91\Spreadsheets\Exception\InvalidDataSourceNameException;
 use Hoogi91\Spreadsheets\Service;
 use Hoogi91\Spreadsheets\Service\ExtractorService;
-use Hoogi91\Spreadsheets\Tests\Unit\FileRepositoryMockTrait;
+use Hoogi91\Spreadsheets\Tests\Unit\Fixtures\FakeResourceFactory;
 use Hoogi91\Spreadsheets\Tests\Unit\Typo3RequestTrait;
 use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
+use TYPO3\CMS\Core\Resource\FileReference;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -19,7 +20,6 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class ExtractorServiceTest extends UnitTestCase
 {
-    use FileRepositoryMockTrait;
     use Typo3RequestTrait;
 
     private ExtractorService $extractorService;
@@ -41,6 +41,10 @@ class ExtractorServiceTest extends UnitTestCase
         $readerService = $this->createMock(Service\ReaderService::class);
         $readerService->method('getSpreadsheet')->willReturn($this->spreadsheet);
 
+        FakeResourceFactory::reset();
+        FakeResourceFactory::setDefaultFileReference($this->createMock(FileReference::class));
+        $fakeResourceFactory = new FakeResourceFactory();
+
         $mappingService = $this->createTestProxy(Service\ValueMappingService::class);
         $styleService = $this->createTestProxy(Service\StyleService::class, [$mappingService]);
         $cellService = $this->createTestProxy(Service\CellService::class, [$styleService]);
@@ -51,7 +55,7 @@ class ExtractorServiceTest extends UnitTestCase
             $this->spanService,
             $this->createTestProxy(Service\RangeService::class),
             $mappingService,
-            $this->getFileRepositoryMock()
+            $fakeResourceFactory
         );
     }
 

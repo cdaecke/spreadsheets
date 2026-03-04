@@ -11,7 +11,6 @@ use PhpOffice\PhpSpreadsheet\RichText\Run;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Style;
 use Psr\Http\Message\ServerRequestInterface;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -25,20 +24,11 @@ class CellService
     {
         /** @var SiteLanguage|null $language */
         $language = $this->getRequest()->getAttribute('language');
-        if ((new Typo3Version())->getMajorVersion() > 11) {
-            $this->currentLocales = implode(',', array_filter([
-                $language?->getLocale()->posixFormatted() ?? '',
-                $language?->getLocale()->getName() ?? '',
-                $language?->getLocale()->getLanguageCode() ?? '',
-            ]));
-
-            return;
-        }
-
-        // @codeCoverageIgnoreStart
-        // This block is for legacy support and will not be tested during test run with coverage
-        $this->currentLocales = $language?->getLocale() ?? '';
-        // @codeCoverageIgnoreEnd
+        $this->currentLocales = implode(',', array_filter([
+            $language?->getLocale()->posixFormatted() ?? '',
+            $language?->getLocale()->getName() ?? '',
+            $language?->getLocale()->getLanguageCode() ?? '',
+        ]));
     }
 
     private function getRequest(): ServerRequestInterface

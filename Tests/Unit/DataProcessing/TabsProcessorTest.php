@@ -18,7 +18,7 @@ class TabsProcessorTest extends AbstractProcessorTestCase
             $this->readerService,
             $this->extractorService,
             $this->styleService,
-            $this->fileRepository,
+            $this->fakeResourceFactory,
             $this->pageRendererMock
         );
     }

@@ -15,7 +15,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Column;
 use PhpOffice\PhpSpreadsheet\Worksheet\Row;
 use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
-use TYPO3\CMS\Core\Resource\FileRepository;
+use TYPO3\CMS\Core\Resource\ResourceFactory;
 
 class ExtractorService
 {
@@ -28,7 +28,7 @@ class ExtractorService
         private readonly SpanService $spanService,
         private readonly RangeService $rangeService,
         private readonly ValueMappingService $mappingService,
-        private readonly FileRepository $fileRepository
+        private readonly ResourceFactory $resourceFactory
     ) {
     }
 
@@ -41,7 +41,7 @@ class ExtractorService
         bool $returnCellRef = false
     ): ValueObject\ExtractionValueObject {
         $spreadsheet = $this->readerService->getSpreadsheet(
-            $this->fileRepository->findFileReferenceByUid($dsnValue->getFileReference())
+            $this->resourceFactory->getFileReferenceObject($dsnValue->getFileReference())
         );
 
         try {

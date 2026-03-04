@@ -6,26 +6,11 @@ namespace Hoogi91\Spreadsheets\Tests\Unit\Domain\ValueObject;
 
 use Hoogi91\Spreadsheets\Domain\ValueObject\DsnValueObject;
 use Hoogi91\Spreadsheets\Exception\InvalidDataSourceNameException;
-use Hoogi91\Spreadsheets\Tests\Unit\FileRepositoryMockTrait;
-use PHPUnit\Framework\MockObject\MockObject;
-use Psr\Container\ContainerInterface;
 use Throwable;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class DsnValueObjectTest extends UnitTestCase
 {
-    use FileRepositoryMockTrait;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        /** @var ContainerInterface&MockObject $container */
-        $container = $this->getContainerMock();
-        $container->method('get')->willReturn($this->getFileRepositoryMock());
-        GeneralUtility::setContainer($container);
-    }
 
     /**
      * @dataProvider legacyProvider
