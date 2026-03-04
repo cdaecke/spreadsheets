@@ -78,8 +78,8 @@ class ReaderServiceTest extends UnitTestCase
         $mock = $this->createMock(ExtensionConfiguration::class);
         $mock->method('get')->willReturnMap(
             [
-                ['ce_tabs', $tabsEnabled],
-                ['read_empty_cells', $readEmptyCells],
+                ['spreadsheets', 'ce_tabs', $tabsEnabled ? '1' : '0'],
+                ['spreadsheets', 'read_empty_cells', $readEmptyCells ? '1' : '0'],
             ]
         );
 

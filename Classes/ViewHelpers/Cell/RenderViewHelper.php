@@ -10,6 +10,8 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\CompileWithRenderStatic;
 
+use const ENT_QUOTES;
+
 class RenderViewHelper extends AbstractViewHelper
 {
     use CompileWithRenderStatic;
@@ -56,7 +58,7 @@ class RenderViewHelper extends AbstractViewHelper
 
         $isHeader = (bool)($arguments['isHeader'] ?? 0);
         if ($isHeader === true && isset($arguments['scope'])) {
-            $attributes = ' scope="' . $arguments['scope'] . '"' . ($attributes ?? '');
+            $attributes = ' scope="' . htmlspecialchars($arguments['scope'], ENT_QUOTES) . '"' . ($attributes ?? '');
         }
 
         return sprintf(

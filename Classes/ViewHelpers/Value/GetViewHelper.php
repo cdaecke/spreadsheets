@@ -6,6 +6,7 @@ namespace Hoogi91\Spreadsheets\ViewHelpers\Value;
 
 use Closure;
 use Hoogi91\Spreadsheets\Domain\ValueObject\DsnValueObject;
+use Hoogi91\Spreadsheets\Exception\InvalidDataSourceNameException;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\CompileWithRenderStatic;
@@ -41,6 +42,10 @@ class GetViewHelper extends AbstractViewHelper
             return null;
         }
 
-        return DsnValueObject::createFromDSN($arguments['subject']);
+        try {
+            return DsnValueObject::createFromDSN($arguments['subject']);
+        } catch (InvalidDataSourceNameException) {
+            return null;
+        }
     }
 }

@@ -88,9 +88,9 @@ class FormattedViewHelper extends AbstractViewHelper
         // at least wrap content as link if required
         return sprintf(
             '<a href="%1$s" target="%3$s" title="%2$s">%4$s</a>',
-            $cell->getHyperlink(),
-            $cell->getHyperlinkTitle(),
-            $arguments['target'] ?? '_blank',
+            htmlspecialchars($cell->getHyperlink(), ENT_QUOTES),
+            htmlspecialchars($cell->getHyperlinkTitle(), ENT_QUOTES),
+            htmlspecialchars($arguments['target'] ?? '_blank', ENT_QUOTES),
             $value
         );
     }

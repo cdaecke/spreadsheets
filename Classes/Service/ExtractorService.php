@@ -212,7 +212,8 @@ class ExtractorService
     private function getCellValue(Cell $cell, array $mergeInformation = []): ValueObject\CellDataValueObject
     {
         $metaData = [];
-        if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend() === true) {
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
+        if ($request !== null && ApplicationType::fromRequest($request)->isBackend() === true) {
             $alignment = $cell->getStyle()->getAlignment();
 
             // evaluate style classes for backend usage

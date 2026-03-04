@@ -12,28 +12,35 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Style;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
+
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 use const LC_NUMERIC;
 
 class CellService
 {
-    private string $currentLocales;
+    private ?string $currentLocales = null;
 
-    public function __construct(private readonly StyleService $styleService)
+    public function __construct(private readonly StyleService $styleService) {}
+
+    private function getRequest(): ?ServerRequestInterface
     {
-        /** @var SiteLanguage|null $language */
-        $language = $this->getRequest()->getAttribute('language');
-        $this->currentLocales = implode(',', array_filter([
-            $language?->getLocale()->posixFormatted() ?? '',
-            $language?->getLocale()->getName() ?? '',
-            $language?->getLocale()->getLanguageCode() ?? '',
-        ]));
+        return $GLOBALS['TYPO3_REQUEST'] ?? null;
     }
 
-    private function getRequest(): ServerRequestInterface
+    private function getCurrentLocales(): string
     {
-        return $GLOBALS['TYPO3_REQUEST'];
+        if ($this->currentLocales === null) {
+            /** @var SiteLanguage|null $language */
+            $language = $this->getRequest()?->getAttribute('language');
+            $this->currentLocales = implode(',', array_filter([
+                $language?->getLocale()->posixFormatted() ?? '',
+                $language?->getLocale()->getName() ?? '',
+                $language?->getLocale()->getLanguageCode() ?? '',
+            ]));
+        }
+
+        return $this->currentLocales;
     }
 
     public function getFormattedValue(Cell $cell): string
@@ -96,8 +103,8 @@ class CellService
         // get cell style to find number format code
         if (is_numeric($value) && $style instanceof Style) {
             // check current locales and set them for converting numeric values
-            if (!empty($this->currentLocales)) {
-                $availableLocales = GeneralUtility::trimExplode(',', $this->currentLocales, true);
+            if (!empty($this->getCurrentLocales())) {
+                $availableLocales = GeneralUtility::trimExplode(',', $this->getCurrentLocales(), true);
                 $currentLocale = setlocale(LC_NUMERIC, '0');
                 setlocale(LC_NUMERIC, ...$availableLocales);
             }
