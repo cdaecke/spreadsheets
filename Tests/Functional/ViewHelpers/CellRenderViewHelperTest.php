@@ -83,7 +83,7 @@ class CellRenderViewHelperTest extends AbstractViewHelperTestCase
     /**
      * @return array<string, mixed>
      */
-    public function cellProvider(): array
+    public static function cellProvider(): array
     {
         return [
             'no cell' => ['', null],

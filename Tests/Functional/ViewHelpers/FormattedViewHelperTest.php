@@ -33,7 +33,7 @@ class FormattedViewHelperTest extends AbstractViewHelperTestCase
     /**
      * @return array<int, array<int, string|array<string|bool>>>
      */
-    public function cellProvider(): array
+    public static function cellProvider(): array
     {
         return [
             // special chars
