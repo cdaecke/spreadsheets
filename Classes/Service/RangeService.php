@@ -45,8 +45,8 @@ class RangeService
     public function convert(Worksheet $sheet, string $range): string
     {
         if (
-            $sheet->getHighestColumn() === 'A'
-            && $sheet->getHighestRow() === 1
+            $sheet->getHighestDataColumn() === 'A'
+            && $sheet->getHighestDataRow() === 1
             && $sheet->cellExists('A1') === false
         ) {
             return '';
@@ -54,16 +54,16 @@ class RangeService
 
         if (preg_match(self::PATTERN_ROW_RANGE, $range, $matches) === 1) {
             // return range => A2:D24 (if highest Column is D)
-            $range = $this->buildRange('A', (int)$matches[1], $sheet->getHighestColumn(), (int)$matches[2]);
+            $range = $this->buildRange('A', (int)$matches[1], $sheet->getHighestDataColumn(), (int)$matches[2]);
         } elseif (preg_match(self::PATTERN_SINGLE_ROW, $range, $matches) === 1) {
             // return range => A2:D2 (if highest Column is D)
-            $range = $this->buildRange('A', (int)$matches[1], $sheet->getHighestColumn(), (int)$matches[1]);
+            $range = $this->buildRange('A', (int)$matches[1], $sheet->getHighestDataColumn(), (int)$matches[1]);
         } elseif (preg_match(self::PATTERN_COLUMN_RANGE, $range, $matches) === 1) {
             // return range => B1:D24 (if highest row is 24)
-            $range = $this->buildRange($matches[1], 1, $matches[2], (int)$sheet->getHighestRow());
+            $range = $this->buildRange($matches[1], 1, $matches[2], (int)$sheet->getHighestDataRow());
         } elseif (preg_match(self::PATTERN_SINGLE_COLUMN, $range, $matches) === 1) {
             // return range => B1:B24 (if highest row is 24)
-            $range = $this->buildRange($matches[1], 1, $matches[1], (int)$sheet->getHighestRow());
+            $range = $this->buildRange($matches[1], 1, $matches[1], (int)$sheet->getHighestDataRow());
         } elseif (preg_match(self::PATTERN_ROW_COLON_COLUMN, $range, $matches) === 1) {
             // return single cell => B2
             $range = $this->buildRange($matches[2], (int)$matches[1]);

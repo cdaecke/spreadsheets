@@ -183,7 +183,7 @@ class DataInputElement extends AbstractFormElement
         $sheetData = [];
         foreach ($spreadsheet->getAllSheets() as $sheetIndex => $worksheet) {
             try {
-                $worksheetRange = 'A1:' . $worksheet->getHighestColumn() . $worksheet->getHighestRow();
+                $worksheetRange = 'A1:' . $worksheet->getHighestDataColumn() . $worksheet->getHighestDataRow();
                 $sheetData[$sheetIndex] = [
                     'name' => $worksheet->getTitle(),
                     'cells' => $extractorService->rangeToCellArray($worksheet, $worksheetRange),

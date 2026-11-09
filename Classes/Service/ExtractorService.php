@@ -81,7 +81,7 @@ class ExtractorService
             }
 
             $rowsToRepeatAtTop = $sheet->getPageSetup()->getRowsToRepeatAtTop();
-            $range = 'A1:' . $sheet->getHighestColumn() . $rowsToRepeatAtTop[1];
+            $range = 'A1:' . $sheet->getHighestDataColumn() . $rowsToRepeatAtTop[1];
 
             return $this->rangeToCellArray($sheet, $range, self::EXTRACT_DIRECTION_HORIZONTAL, $returnCellRef);
         } catch (SpreadsheetException) {
@@ -97,13 +97,13 @@ class ExtractorService
     {
         try {
             if ($sheet->getPageSetup()->isRowsToRepeatAtTopSet() === false) {
-                $range = 'A1:' . $sheet->getHighestColumn() . $sheet->getHighestRow();
+                $range = 'A1:' . $sheet->getHighestDataColumn() . $sheet->getHighestDataRow();
 
                 return $this->rangeToCellArray($sheet, $range, self::EXTRACT_DIRECTION_HORIZONTAL, $returnCellRef);
             }
 
             $rowsToRepeatAtTop = $sheet->getPageSetup()->getRowsToRepeatAtTop();
-            $range = 'A' . ($rowsToRepeatAtTop[1] + 1) . ':' . $sheet->getHighestColumn() . $sheet->getHighestRow();
+            $range = 'A' . ($rowsToRepeatAtTop[1] + 1) . ':' . $sheet->getHighestDataColumn() . $sheet->getHighestDataRow();
 
             return $this->rangeToCellArray($sheet, $range, self::EXTRACT_DIRECTION_HORIZONTAL, $returnCellRef);
         } catch (SpreadsheetException) {

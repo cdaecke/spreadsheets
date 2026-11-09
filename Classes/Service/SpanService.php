@@ -51,7 +51,7 @@ class SpanService
         }
 
         // check if unique column values will exceed max. column count and should be ignored
-        $maxRowCount = $worksheet->getHighestRow();
+        $maxRowCount = $worksheet->getHighestDataRow();
         $ignoredColumnsByRow = array_map(
             static fn ($values) => count(array_unique($values)) >= $maxRowCount,
             $ignoredColumnsByRow
@@ -80,7 +80,7 @@ class SpanService
         }
 
         // check if unique column values will exceed max. column count and should be ignored
-        $maxColumnCount = Coordinate::columnIndexFromString($worksheet->getHighestColumn());
+        $maxColumnCount = Coordinate::columnIndexFromString($worksheet->getHighestDataColumn());
         $ignoredRowsByColumn = array_map(
             static fn ($values) => count(array_unique($values)) >= $maxColumnCount,
             $ignoredRowsByColumn
@@ -126,8 +126,8 @@ class SpanService
             return $this->mergedCells[$sheetHash];
         }
 
-        $rowCount = $worksheet->getHighestRow();
-        $columnCount = Coordinate::columnIndexFromString($worksheet->getHighestColumn());
+        $rowCount = $worksheet->getHighestDataRow();
+        $columnCount = Coordinate::columnIndexFromString($worksheet->getHighestDataColumn());
 
         $mergedCells = [];
         foreach ($worksheet->getMergeCells() as $cells) {
